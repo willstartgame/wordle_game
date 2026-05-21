@@ -15,3 +15,6 @@ default.db
 
 # VS Code 設定
 .vscode/
+
+# macOS 系統檔案
+.DS_Store
