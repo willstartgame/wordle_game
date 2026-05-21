@@ -79,7 +79,7 @@ def register():
     if existing_player:
         return jsonify({"status": "error", "message": "此帳號已經被註冊過了"}), 400
 
-    hashed_password = generate_password_hash(password)
+    hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
     new_player = Player()
     new_player.username = username
     new_player.password_hash = hashed_password

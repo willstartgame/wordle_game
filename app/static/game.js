@@ -230,6 +230,21 @@ function initVirtualKeyboard() {
     if (keyboard && handle) {
         makeElementDraggable(keyboard, handle);
     }
+
+    // [NEW] 載入自訂大小設定與綁定縮放把手
+    const resizeHandle = document.getElementById("keyboard-resize-handle");
+    if (keyboard && resizeHandle) {
+        makeElementResizable(keyboard, resizeHandle);
+    }
+    
+    // 初始化鍵盤尺寸
+    if (keyboard) {
+        const savedWidth = localStorage.getItem("kbd_custom_width");
+        if (savedWidth && !keyboard.classList.contains("collapsed")) {
+            keyboard.style.width = savedWidth + "px";
+            updateKeyboardScale(keyboard, parseInt(savedWidth));
+        }
+    }
 }
 
 // [NEW] 讓元素變得可自由拖曳 (支援滑鼠與觸控)
@@ -378,6 +393,126 @@ function makeElementDraggable(elmnt, dragHandle) {
     });
 }
 
+// [NEW] 動態更新虛擬鍵盤按鍵縮放比例
+function updateKeyboardScale(elmnt, width) {
+    const ratio = width / 450; // 基準寬度為 450px
+    elmnt.style.setProperty("--kbd-key-max-width", (44 * ratio) + "px");
+    elmnt.style.setProperty("--kbd-key-height", (50 * ratio) + "px");
+    elmnt.style.setProperty("--kbd-key-font-size", Math.max(10, 14 * ratio) + "px");
+    elmnt.style.setProperty("--kbd-wide-key-max-width", (72 * ratio) + "px");
+    elmnt.style.setProperty("--kbd-wide-key-font-size", Math.max(8, 11 * ratio) + "px");
+}
+
+// [NEW] 讓元素變得可縮放 (支援滑鼠與觸控)
+function makeElementResizable(elmnt, handle) {
+    let startX = 0, startWidth = 0;
+
+    handle.addEventListener("mousedown", initResize);
+    handle.addEventListener("touchstart", initTouchResize, { passive: false });
+
+    function initResize(e) {
+        if (e.button !== 0) return; // 僅允許左鍵
+        e.preventDefault();
+        e.stopPropagation();
+
+        startX = e.clientX;
+        startWidth = parseInt(document.defaultView.getComputedStyle(elmnt).width, 10);
+
+        document.addEventListener("mousemove", resize);
+        document.addEventListener("mouseup", stopResize);
+
+        elmnt.classList.add("resizing");
+    }
+
+    function resize(e) {
+        e.preventDefault();
+        const dx = e.clientX - startX;
+        let newWidth = startWidth + dx;
+
+        const minWidth = 280;
+        const maxWidth = Math.min(800, window.innerWidth - 30);
+
+        if (newWidth < minWidth) newWidth = minWidth;
+        if (newWidth > maxWidth) newWidth = maxWidth;
+
+        elmnt.style.width = newWidth + "px";
+        updateKeyboardScale(elmnt, newWidth);
+        
+        keepKeyboardWithinBounds(elmnt);
+    }
+
+    function stopResize() {
+        document.removeEventListener("mousemove", resize);
+        document.removeEventListener("mouseup", stopResize);
+        elmnt.classList.remove("resizing");
+
+        if (!elmnt.classList.contains("collapsed")) {
+            localStorage.setItem("kbd_custom_width", parseInt(elmnt.style.width, 10));
+        }
+    }
+
+    // 觸控拖曳縮放支援
+    function initTouchResize(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startWidth = parseInt(document.defaultView.getComputedStyle(elmnt).width, 10);
+
+        document.addEventListener("touchmove", touchResize, { passive: false });
+        document.addEventListener("touchend", stopTouchResize);
+
+        elmnt.classList.add("resizing");
+    }
+
+    function touchResize(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        let newWidth = startWidth + dx;
+
+        const minWidth = 280;
+        const maxWidth = Math.min(800, window.innerWidth - 30);
+
+        if (newWidth < minWidth) newWidth = minWidth;
+        if (newWidth > maxWidth) newWidth = maxWidth;
+
+        elmnt.style.width = newWidth + "px";
+        updateKeyboardScale(elmnt, newWidth);
+        
+        keepKeyboardWithinBounds(elmnt);
+    }
+
+    function stopTouchResize() {
+        document.removeEventListener("touchmove", touchResize);
+        document.removeEventListener("touchend", stopTouchResize);
+        elmnt.classList.remove("resizing");
+
+        if (!elmnt.classList.contains("collapsed")) {
+            localStorage.setItem("kbd_custom_width", parseInt(elmnt.style.width, 10));
+        }
+    }
+
+    // 監聽視窗大小改變，自動適應微調
+    window.addEventListener("resize", () => {
+        if (elmnt.classList.contains("collapsed")) return;
+        
+        const savedWidth = localStorage.getItem("kbd_custom_width");
+        let activeWidth = savedWidth ? parseInt(savedWidth) : 450;
+        
+        const maxWidth = Math.min(800, window.innerWidth - 30);
+        if (activeWidth > maxWidth) {
+            activeWidth = maxWidth;
+            elmnt.style.width = activeWidth + "px";
+            updateKeyboardScale(elmnt, activeWidth);
+        }
+    });
+}
+
 // [NEW] 全局折疊控制函數 (折疊/展開虛擬鍵盤)
 function toggleKeyboardCollapse(e) {
     if (e) {
@@ -394,8 +529,24 @@ function toggleKeyboardCollapse(e) {
     
     if (isCollapsing) {
         toggleBtn.innerText = "➕ 展開";
+        // 清除行內寬度樣式，讓 CSS 中的 .collapsed 寬度 (170px) 能順利套用
+        keyboard.style.width = "";
     } else {
         toggleBtn.innerText = "➖ 收起";
+        
+        // 展開時恢復 localStorage 記憶的自訂寬度與縮放
+        const savedWidth = localStorage.getItem("kbd_custom_width");
+        if (savedWidth) {
+            keyboard.style.width = savedWidth + "px";
+            updateKeyboardScale(keyboard, parseInt(savedWidth));
+        } else {
+            keyboard.style.width = "";
+            keyboard.style.removeProperty("--kbd-key-max-width");
+            keyboard.style.removeProperty("--kbd-key-height");
+            keyboard.style.removeProperty("--kbd-key-font-size");
+            keyboard.style.removeProperty("--kbd-wide-key-max-width");
+            keyboard.style.removeProperty("--kbd-wide-key-font-size");
+        }
         
         // 展開時需要自動防護，防止鍵盤溢出邊界
         // 1. 立即大略校正

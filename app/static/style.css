@@ -859,6 +859,40 @@ button:hover {
     border-color: #2196f3;
 }
 
+.virtual-keyboard.resizing {
+    transition: none !important;
+}
+
+/* 視窗風格縮放把手 */
+.keyboard-resize-handle {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+    z-index: 1001;
+    background-image: linear-gradient(135deg, 
+        transparent 30%, 
+        #999 30%, #999 40%, 
+        transparent 40%, transparent 55%, 
+        #999 55%, #999 65%, 
+        transparent 65%, transparent 80%, 
+        #999 80%, #999 90%, 
+        transparent 90%
+    );
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.keyboard-resize-handle:hover {
+    opacity: 1;
+}
+
+.virtual-keyboard.collapsed .keyboard-resize-handle {
+    display: none;
+}
+
 .keyboard-header {
     display: flex;
     justify-content: space-between;
@@ -930,19 +964,19 @@ button:hover {
     border: none;
     border-radius: 6px;
     padding: 0;
-    height: 50px;
+    height: var(--kbd-key-height, 50px);
     flex: 1;
-    max-width: 44px;
+    max-width: var(--kbd-key-max-width, 44px);
     background-color: #d3d6da;
     color: #1a1a1a;
-    font-size: 14px;
+    font-size: var(--kbd-key-font-size, 14px);
     font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
-    transition: all 0.1s ease-in-out;
+    transition: background-color 0.1s ease-in-out, transform 0.1s ease-in-out, opacity 0.1s ease-in-out;
     touch-action: manipulation;
     outline: none;
     box-sizing: border-box;
@@ -954,8 +988,8 @@ button:hover {
 
 .key.wide-key {
     flex: 1.6;
-    max-width: 72px;
-    font-size: 11px;
+    max-width: var(--kbd-wide-key-max-width, 72px);
+    font-size: var(--kbd-wide-key-font-size, 11px);
 }
 
 .key:hover {
