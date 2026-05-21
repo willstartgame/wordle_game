@@ -1,0 +1,1075 @@
+/* --- 1. 整體網頁與大廳設計 --- */
+body {
+    font-family: "微軟正黑體", "Microsoft JhengHei", sans-serif;
+    background-color: #f0f2f5;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+#app-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* --- 2. 遊戲主畫面排版 (左邊計分、右邊猜字) --- */
+#game-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+#scoreboard-container {
+    width: 30%;
+}
+
+#scoreboard-area {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+#wordle-area {
+    width: 65%;
+}
+
+#wordle-grid-wrapper {
+    max-height: 410px; /* 約等於 6 列格子的加總高度 */
+    overflow-y: auto;
+    padding-right: 5px;
+    margin-bottom: 20px;
+    scroll-behavior: smooth;
+}
+
+/* 讓主網格在大亂鬥中可以平滑滾動並有高質感紫色調滾動條 */
+#wordle-grid-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+#wordle-grid-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+}
+#wordle-grid-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(156, 39, 176, 0.25);
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+#wordle-grid-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 39, 176, 0.55);
+}
+
+/* --- 3. Wordle 經典格子設計 --- */
+#wordle-grid {
+    display: grid;
+    /* 這裡設定一排有 5 個格子，每個格子 60px 寬 */
+    grid-template-columns: repeat(5, 60px);
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+/* 單一個格子的長相 */
+.cell {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #d3d6da;
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase; /* 確保輸入的字看起來都是大寫 */
+    transition: all 0.2s ease-in-out; /* 動畫過渡效果 */
+}
+
+/* 填入字母時的動畫 */
+.cell[data-state="filled"] {
+    border-color: #878a8c;
+    animation: popIn 0.1s;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    40% { transform: scale(1.1); }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* --- 4. 裁判給的顏色提示 --- */
+.green {
+    background-color: #6aaa64;
+    color: white;
+    border-color: #6aaa64;
+}
+
+.yellow {
+    background-color: #c9b458;
+    color: white;
+    border-color: #c9b458;
+}
+
+.gray {
+    background-color: #787c7e;
+    color: white;
+    border-color: #787c7e;
+}
+
+/* 輸入框和按鈕美化 */
+input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* --- 5. 計分板與計時器樣式 --- */
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-left: 5px solid #4CAF50;
+    transition: all 0.3s ease;
+}
+
+.score-row.first-place {
+    border-left-color: #FFD700;
+    background: #fffbf0;
+}
+
+.score-row .player-name {
+    font-weight: bold;
+    font-size: 1em;
+    word-break: break-all;
+}
+
+.score-row .player-score {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #4CAF50;
+    white-space: nowrap;
+}
+
+.timer-urgent {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: #ff0000; }
+    100% { transform: scale(1); }
+}
+
+/* --- 6. 個人草稿格子特殊外觀 (Premium Amber/Gold Theme) --- */
+.private-cell {
+    border-color: #FFD700 !important; /* 琥珀金外框 */
+    background-color: #fffdf6;
+    color: #b8860b;
+    box-shadow: inset 0 1px 3px rgba(255, 215, 0, 0.1);
+}
+
+.private-cell[data-state="filled"] {
+    border-color: #d4af37 !important;
+    background-color: #fffbeb;
+    animation: draftPop 0.12s ease-out;
+}
+
+@keyframes draftPop {
+    from { transform: scale(0.9); }
+    to { transform: scale(1); }
+}
+
+/* --- 7. 大亂鬥即時猜測浮動提示 (Premium Floating Toast) --- */
+.battle-toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.battle-toast {
+    position: relative; /* 確保子火花定位相對於本體 */
+    background: linear-gradient(135deg, #8e2de2, #4a00e0); /* 絢麗紫色漸層 */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 8px 20px rgba(142, 45, 226, 0.35);
+    font-size: 1.05em;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: toastFadeInOut 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.battle-toast .toast-icon {
+    font-size: 1.25em;
+    animation: rotateLightning 0.5s ease-in-out;
+}
+
+.battle-toast .toast-user {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    color: #ffd700; /* 金黃色凸顯玩家 */
+}
+
+.battle-toast .toast-word {
+    background: white;
+    color: #4a00e0;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-family: monospace;
+    font-size: 1.05em;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* 🌟 金色特別版大亂鬥猜中提示 🌟 */
+.battle-toast.battle-toast-correct {
+    background: linear-gradient(135deg, #ffe259, #ffa751); /* 黃金閃耀漸層 */
+    color: #4a2700; /* 高對比古銅字體 */
+    box-shadow: 0 10px 30px rgba(255, 167, 81, 0.6), 0 0 20px rgba(255, 226, 89, 0.5);
+    border: 2px solid #ffffff;
+    animation: toastCorrectFadeInOut 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, goldGlowPulse 0.5s infinite alternate;
+}
+
+.battle-toast.battle-toast-correct .toast-icon {
+    font-size: 1.45em;
+    animation: bounceCrown 0.6s infinite alternate;
+}
+
+.battle-toast.battle-toast-correct .toast-user {
+    background: rgba(74, 39, 0, 0.12);
+    color: #3e2723;
+}
+
+.battle-toast.battle-toast-correct .toast-word {
+    background: #4a2700;
+    color: #ffe259;
+    box-shadow: 0 2px 6px rgba(74, 39, 0, 0.3);
+}
+
+.battle-toast.battle-toast-correct .toast-pts {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    box-shadow: 0 2px 5px rgba(231, 76, 60, 0.4);
+    animation: pulsePoints 0.3s ease-in-out infinite alternate;
+}
+
+/* ✨ 絢麗爆炸黃金火花特效 ✨ */
+.battle-gold-sparkle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    animation: sparkleExplode 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.battle-gold-sparkle.sparkle-circle {
+    border-radius: 50%;
+}
+
+.battle-gold-sparkle.sparkle-star {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.battle-gold-sparkle.sparkle-diamond {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+@keyframes toastFadeInOut {
+    0% { transform: translateY(-40px) scale(0.85); opacity: 0; }
+    20% { transform: translateY(0) scale(1.03); opacity: 1; }
+    80% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-25px) scale(0.9); opacity: 0; }
+}
+
+@keyframes toastCorrectFadeInOut {
+    0% { transform: translateY(-50px) scale(0.7) rotate(-4deg); opacity: 0; }
+    15% { transform: translateY(0) scale(1.15) rotate(2deg); opacity: 1; }
+    30% { transform: translateY(0) scale(0.98) rotate(-1deg); opacity: 1; }
+    80% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-30px) scale(0.8); opacity: 0; }
+}
+
+@keyframes goldGlowPulse {
+    0% { box-shadow: 0 10px 30px rgba(255, 167, 81, 0.6), 0 0 10px rgba(255, 226, 89, 0.4); }
+    100% { box-shadow: 0 12px 35px rgba(255, 167, 81, 0.8), 0 0 25px rgba(255, 226, 89, 0.7); }
+}
+
+@keyframes rotateLightning {
+    0% { transform: rotate(-30deg) scale(0.6); }
+    100% { transform: rotate(0) scale(1); }
+}
+
+@keyframes bounceCrown {
+    0% { transform: translateY(0) scale(1) rotate(-5deg); }
+    100% { transform: translateY(-5px) scale(1.25) rotate(5deg); }
+}
+
+@keyframes pulsePoints {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+
+@keyframes sparkleExplode {
+    0% {
+        transform: translate(-50%, -50%) scale(0.2) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.1) rotate(270deg);
+        opacity: 0;
+    }
+}
+
+/* ⚡ 狂熱賽炫藍得分提示 ⚡ */
+.battle-toast.frenzy-toast {
+    background: linear-gradient(135deg, #00c6ff, #0072ff); /* 霓虹炫藍漸層 */
+    color: white;
+    box-shadow: 0 10px 25px rgba(0, 198, 255, 0.5), 0 0 15px rgba(0, 242, 254, 0.4);
+    border: 2px solid #00f2fe;
+    animation: toastFrenzyFadeInOut 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, blueGlowPulse 0.5s infinite alternate;
+}
+
+.battle-toast.frenzy-toast .toast-icon {
+    font-size: 1.35em;
+    animation: rotateFire 0.6s infinite alternate;
+}
+
+.battle-toast.frenzy-toast .toast-user {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+.battle-toast.frenzy-toast .toast-pts {
+    background: #00f2fe;
+    color: #004e92;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 242, 254, 0.4);
+    animation: pulsePoints 0.3s ease-in-out infinite alternate;
+}
+
+/* 炫藍微粒 */
+.frenzy-blue-sparkle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    animation: sparkleExplode 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.frenzy-blue-sparkle.sparkle-circle {
+    border-radius: 50%;
+}
+
+.frenzy-blue-sparkle.sparkle-star {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.frenzy-blue-sparkle.sparkle-diamond {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+@keyframes toastFrenzyFadeInOut {
+    0% { transform: translateY(-50px) scale(0.7) rotate(4deg); opacity: 0; }
+    15% { transform: translateY(0) scale(1.1) rotate(-1deg); opacity: 1; }
+    30% { transform: translateY(0) scale(0.98) rotate(1deg); opacity: 1; }
+    80% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-30px) scale(0.8); opacity: 0; }
+}
+
+@keyframes blueGlowPulse {
+    0% { box-shadow: 0 10px 25px rgba(0, 198, 255, 0.5), 0 0 10px rgba(0, 242, 254, 0.3); }
+    100% { box-shadow: 0 12px 30px rgba(0, 198, 255, 0.7), 0 0 20px rgba(0, 242, 254, 0.6); }
+}
+
+@keyframes rotateFire {
+    0% { transform: scale(1) rotate(-10deg); }
+    100% { transform: scale(1.2) rotate(10deg); }
+}
+
+/* --- 8. 個人剩餘猜測次數 Badge 樣式 --- */
+.draft-badge {
+    font-size: 0.85em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+/* 剩餘次數充足時的金黃色樣式 */
+.draft-badge.badge-sufficient {
+    background: linear-gradient(135deg, #ffe259, #ffa751);
+    color: #4a2700;
+    box-shadow: 0 2px 8px rgba(255, 167, 81, 0.4), 0 0 5px rgba(255, 226, 89, 0.3);
+}
+
+/* 剩餘次數吃緊 (<= 2 次) 時的鮮紅呼吸燈樣式 */
+.draft-badge.badge-warning {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    color: white;
+    box-shadow: 0 2px 10px rgba(255, 75, 43, 0.5), 0 0 8px rgba(255, 65, 108, 0.4);
+    animation: badgeUrgentPulse 1.0s infinite alternate;
+}
+
+@keyframes badgeUrgentPulse {
+    0% { transform: scale(1); box-shadow: 0 2px 10px rgba(255, 75, 43, 0.5); }
+    100% { transform: scale(1.06); box-shadow: 0 4px 15px rgba(255, 75, 43, 0.8), 0 0 12px rgba(255, 65, 108, 0.6); }
+}
+
+/* --- 9. 多人連線大廳活躍房間列表樣式 --- */
+#available-rooms-list {
+    max-height: 260px;
+    overflow-y: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 5px;
+    margin-top: 15px;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+/* 房間列表專用精緻滾動條 */
+#available-rooms-list::-webkit-scrollbar {
+    width: 6px;
+}
+#available-rooms-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+}
+#available-rooms-list::-webkit-scrollbar-thumb {
+    background: rgba(33, 150, 243, 0.2);
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+#available-rooms-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(33, 150, 243, 0.45);
+}
+
+/* 房間卡片 */
+.room-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e1e8ed;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-sizing: border-box;
+}
+
+.room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.12);
+    border-color: #bbdefb;
+}
+
+/* 房間左側資訊 */
+.room-info {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.room-title-text {
+    font-size: 1.05em;
+    font-weight: 800;
+    color: #2c3e50;
+}
+
+.room-details {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.room-host {
+    font-weight: 600;
+    color: #5d6d7e;
+}
+
+.room-players-count {
+    background: #eef2f5;
+    padding: 1px 8px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #34495e;
+}
+
+/* 房間右側操作區 */
+.room-status-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 狀態標籤 */
+.room-badge {
+    font-size: 0.85em;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1;
+}
+
+/* 尚未開始 (綠色微光) */
+.room-badge-waiting {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    color: #2e7d32;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.1);
+}
+
+.room-badge-waiting::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    display: inline-block;
+    animation: flashGreen 1.5s infinite alternate;
+}
+
+@keyframes flashGreen {
+    0% { opacity: 0.4; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 4px #4caf50; }
+}
+
+/* 遊戲中 (紅色微光) */
+.room-badge-playing {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    color: #c62828;
+    box-shadow: 0 2px 8px rgba(198, 40, 40, 0.1);
+}
+
+.room-badge-playing::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background-color: #f44336;
+    border-radius: 50%;
+    display: inline-block;
+    animation: flashRed 1.5s infinite alternate;
+}
+
+@keyframes flashRed {
+    0% { opacity: 0.4; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1.1); box-shadow: 0 0 4px #f44336; }
+}
+
+/* 加入按鈕 */
+.room-join-btn {
+    background: linear-gradient(135deg, #2196f3, #1e88e5);
+    color: white;
+    font-size: 0.9em;
+    font-weight: bold;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(33, 150, 243, 0.25);
+    transition: all 0.2s ease;
+}
+
+.room-join-btn:hover {
+    background: linear-gradient(135deg, #1e88e5, #1565c0);
+    box-shadow: 0 4px 10px rgba(33, 150, 243, 0.4);
+    transform: scale(1.05);
+}
+
+.room-join-btn:active {
+    transform: scale(0.95);
+}
+
+/* 停用按鈕 (遊戲中) */
+.room-join-btn.btn-disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+/* 空房間列表佔位樣式 */
+.room-list-empty {
+    width: 100%;
+    padding: 30px 10px;
+    text-align: center;
+    color: #95a5a6;
+    font-size: 0.95em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+}
+
+.room-list-empty-icon {
+    font-size: 2.2em;
+    animation: floatingDoor 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatingDoor {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-4px); }
+}
+
+/* --- 9.5 多人連線大廳雙卡片與按鈕設計 --- */
+.lobby-cards-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    max-width: 750px;
+    margin: 0 auto 25px auto;
+    flex-wrap: wrap;
+}
+
+.lobby-card {
+    flex: 1;
+    min-width: 320px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    border: 1px solid #eef2f5;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-sizing: border-box;
+}
+
+.lobby-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.lobby-card.create-card {
+    border-top: 5px solid #ff9800;
+}
+
+.lobby-card.join-card {
+    border-top: 5px solid #2196f3;
+}
+
+.lobby-card .card-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.25em;
+    color: #2c3e50;
+    font-weight: bold;
+    border-bottom: 1px solid #f0f3f6;
+    padding-bottom: 10px;
+}
+
+.lobby-card .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.lobby-card .input-group label {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #7f8c8d;
+}
+
+.lobby-card .input-group input,
+.lobby-card .input-group select {
+    padding: 12px;
+    font-size: 1em;
+    border-radius: 10px;
+    border: 1.5px solid #dcdde1;
+    outline: none;
+    transition: border-color 0.2s;
+    background: #fdfefe;
+    color: #2c3e50;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.lobby-card .input-group input:focus,
+.lobby-card .input-group select:focus {
+    border-color: #3498db;
+    background: #ffffff;
+}
+
+.lobby-card .input-row {
+    display: flex;
+    gap: 12px;
+}
+
+.lobby-card .flex-1 {
+    flex: 1;
+}
+
+.lobby-card .join-info-tip {
+    background: rgba(33, 150, 243, 0.05);
+    border: 1.5px dashed rgba(33, 150, 243, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.lobby-card .join-info-tip p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #1b78c2;
+    line-height: 1.4;
+}
+
+.lobby-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1em;
+    font-weight: bold;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    transition: all 0.25s ease;
+    text-align: center;
+}
+
+.lobby-btn.btn-create {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.35);
+}
+
+.lobby-btn.btn-create:hover {
+    background: linear-gradient(135deg, #f57c00, #e65100);
+    box-shadow: 0 6px 18px rgba(255, 152, 0, 0.5);
+    transform: scale(1.02);
+}
+
+.lobby-btn.btn-join {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.35);
+}
+
+.lobby-btn.btn-join:hover {
+    background: linear-gradient(135deg, #1976d2, #0d47a1);
+    box-shadow: 0 6px 18px rgba(33, 150, 243, 0.5);
+    transform: scale(1.02);
+}
+
+/* --- 10. 互動式虛擬鍵盤與行動端響應式排版 (Virtual Keyboard & Responsiveness) --- */
+.virtual-keyboard {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    z-index: 1000;
+    width: 450px;
+    max-width: 90%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    user-select: none;
+    box-sizing: border-box;
+    transition: box-shadow 0.2s, border-color 0.2s, width 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), padding 0.25s ease-in-out;
+}
+
+.virtual-keyboard.collapsed {
+    width: 170px;
+    padding: 8px 12px;
+}
+
+.virtual-keyboard.collapsed .keyboard-keys-body {
+    display: none;
+}
+
+.virtual-keyboard.collapsed .drag-text {
+    display: none;
+}
+
+.virtual-keyboard.dragging {
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.22);
+    border-color: #2196f3;
+}
+
+.keyboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 2px 4px 6px 4px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: move; /* 指示可拖曳 */
+    touch-action: none;
+    box-sizing: border-box;
+}
+
+.virtual-keyboard.collapsed .keyboard-header {
+    border-bottom: none;
+    padding: 0;
+}
+
+.drag-handle-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #555;
+    font-weight: bold;
+    pointer-events: none; /* 防止干擾拖曳 */
+}
+
+.drag-icon {
+    font-size: 16px;
+    color: #999;
+}
+
+.keyboard-collapse-btn {
+    padding: 3px 10px;
+    font-size: 11px;
+    background: #eef2f5;
+    color: #4f5d75;
+    border-radius: 20px;
+    border: 1px solid #dcdde1;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.keyboard-collapse-btn:hover {
+    background: #e1e8ed;
+    color: #2d3748;
+}
+
+.keyboard-keys-body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 6px;
+    touch-action: manipulation;
+    box-sizing: border-box;
+}
+
+.key {
+    border: none;
+    border-radius: 6px;
+    padding: 0;
+    height: 50px;
+    flex: 1;
+    max-width: 44px;
+    background-color: #d3d6da;
+    color: #1a1a1a;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    transition: all 0.1s ease-in-out;
+    touch-action: manipulation;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.key-spacer {
+    flex: 0.5;
+}
+
+.key.wide-key {
+    flex: 1.6;
+    max-width: 72px;
+    font-size: 11px;
+}
+
+.key:hover {
+    background-color: #c4c6ca;
+}
+
+.key:active {
+    transform: scale(0.92);
+    opacity: 0.85;
+}
+
+/* 鍵盤字母精緻燈號狀態 (Green > Yellow > Gray) */
+.key.green {
+    background-color: #6aaa64 !important;
+    color: white !important;
+}
+
+.key.yellow {
+    background-color: #c9b458 !important;
+    color: white !important;
+}
+
+.key.gray {
+    background-color: #787c7e !important;
+    color: white !important;
+}
+
+/* --- 11. 行動端高質感響應式媒體查詢 (Mobile Responsiveness) --- */
+@media screen and (max-width: 768px) {
+    #app-container {
+        padding: 15px 12px;
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 100%;
+    }
+    
+    #logo-section h1 {
+        font-size: 2.2em !important;
+    }
+    
+    #logo-section h2 {
+        font-size: 1.2em !important;
+    }
+    
+    #game-section {
+        flex-direction: column-reverse; /* 猜字區在上，計分板在下更順手 */
+        align-items: center;
+        gap: 20px;
+        margin-top: 15px;
+    }
+    
+    #scoreboard-container {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    
+    #wordle-area {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    
+    .lobby-cards-container {
+        flex-direction: column !important;
+        gap: 15px;
+    }
+    
+    .lobby-card {
+        min-width: 100% !important;
+    }
+
+    .virtual-keyboard {
+        right: 15px;
+        bottom: 15px;
+        width: calc(100% - 30px);
+        max-width: 450px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #wordle-grid {
+        grid-template-columns: repeat(5, 48px) !important;
+        gap: 6px !important;
+    }
+    
+    .cell {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 24px !important;
+        border-width: 1.5px !important;
+    }
+    
+    #private-draft-row {
+        gap: 6px !important;
+    }
+    
+    .private-cell {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 24px !important;
+    }
+    
+    .key {
+        height: 44px !important;
+        font-size: 12px !important;
+        border-radius: 4px !important;
+    }
+    
+    .key.wide-key {
+        font-size: 10px !important;
+        flex: 1.5 !important;
+    }
+    
+    .keyboard-row {
+        gap: 4px !important;
+    }
+}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>多人線上 Wordle 搶分戰</title>
+    <!-- 預留給等一下要穿的 CSS 衣服 -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- 設定選單 (預設隱藏，登入後才顯示) -->
+    <div id="settings-container" style="display: none; position: absolute; top: 20px; left: 20px;">
+        <button onclick="toggleSettings()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px; color: #333;">⚙️</button>
+        <div id="settings-menu" style="display: none; position: absolute; top: 40px; left: 0; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 10px; width: 120px; z-index: 100;">
+            <button id="btn-leave-room" onclick="leaveRoom()" style="display: none; width: 100%; margin-bottom: 5px; background-color: #f44336; padding: 8px; font-size: 14px;">退出房間</button>
+            <button id="btn-logout" onclick="logout()" style="width: 100%; background-color: #666; padding: 8px; font-size: 14px;">登出</button>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <!-- LOGO 區塊 -->
+        <div id="logo-section" style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 3em; margin: 0; color: #333;">🎮 WORDLE</h1>
+            <h2 style="font-size: 1.5em; margin: 0; color: #666;">多人連線搶分戰</h2>
+        </div>
+
+        <!-- 1. 登入與註冊區（Auth Section） -->
+        <div id="auth-section" style="text-align: center;">
+            <h3>請先登入或註冊</h3>
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="username" placeholder="輸入玩家名稱" style="padding: 10px; font-size: 1em;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="password" id="password" placeholder="輸入密碼" style="padding: 10px; font-size: 1em;">
+            </div>
+            <div>
+                <button onclick="login()" style="margin-right: 10px;">登入</button>
+                <button onclick="register()" style="background-color: #2196F3;">註冊帳號</button>
+            </div>
+            <p id="auth-message" style="color: red; margin-top: 10px;"></p>
+        </div>
+
+        <!-- 1.5 模式選擇區 (登入後顯示) -->
+        <div id="mode-selection-section" style="display: none; text-align: center;">
+            <h3 id="welcome-message" style="font-size: 1.5em; margin-bottom: 25px; color: #333;"></h3>
+            
+            <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+                <button onclick="joinSinglePlayer()" style="background: linear-gradient(135deg, #4CAF50, #81C784); font-size: 1.3em; padding: 20px 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); font-weight: bold; min-width: 180px; transition: transform 0.2s; border: none; cursor: pointer;">🎮 單人模式</button>
+                <button onclick="openMultiplayerLobby()" style="background: linear-gradient(135deg, #2196F3, #64B5F6); font-size: 1.3em; padding: 20px 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3); font-weight: bold; min-width: 180px; transition: transform 0.2s; border: none; cursor: pointer;">⚔️ 多人模式</button>
+            </div>
+            
+            <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 25px;">
+                <button onclick="openLeaderboard()" style="background-color: #787c7e; font-size: 1em; padding: 10px 20px; margin-right: 10px; border-radius: 8px;">🏆 查看排行榜</button>
+                <button onclick="openAccountInfo()" style="background-color: #9c27b0; font-size: 1em; padding: 10px 20px; border-radius: 8px;">👤 帳號資訊</button>
+            </div>
+        </div>
+
+        <!-- 1.5.5 多人模式連線大廳 (點選多人模式後顯示) -->
+        <div id="multiplayer-lobby-section" style="display: none; text-align: center;">
+            <h2 style="font-size: 2em; margin-bottom: 10px; color: #2196F3;">⚔️ 多人連線大廳</h2>
+            <p style="color: #666; margin-bottom: 25px;">建立新房間或加入現有的房間與其他玩家對決！</p>
+            
+            <!-- 雙卡片：建立房間與加入房間分流 -->
+            <div class="lobby-cards-container">
+                <!-- Card 1: 建立專屬房間 -->
+                <div class="lobby-card create-card">
+                    <h3 class="card-title">➕ 建立專屬房間</h3>
+                    <div class="input-group">
+                        <label for="create-room-id">房間號碼</label>
+                        <input type="text" id="create-room-id" placeholder="例如: 888" style="box-sizing: border-box;">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group flex-1">
+                            <label for="room-max-players">人數上限</label>
+                            <select id="room-max-players" style="box-sizing: border-box;">
+                                <option value="2">2 人</option>
+                                <option value="3">3 人</option>
+                                <option value="4">4 人</option>
+                                <option value="5" selected>5 人</option>
+                                <option value="6">6 人</option>
+                                <option value="7">7 人</option>
+                                <option value="8">8 人</option>
+                                <option value="9">9 人</option>
+                                <option value="10">10 人</option>
+                            </select>
+                        </div>
+                        <div class="input-group flex-1">
+                            <label for="room-privacy">房間隱私</label>
+                            <select id="room-privacy" style="box-sizing: border-box;">
+                                <option value="public" selected>🌐 公開</option>
+                                <option value="private">🔒 私人</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="createRoom()" class="lobby-btn btn-create">✨ 建立房間</button>
+                </div>
+
+                <!-- Card 2: 進入現有房間 -->
+                <div class="lobby-card join-card">
+                    <h3 class="card-title">🔑 進入現有房間</h3>
+                    <div class="input-group">
+                        <label for="room-id">房間號碼</label>
+                        <input type="text" id="room-id" placeholder="輸入房間號碼 (例如: 123)" style="box-sizing: border-box;">
+                    </div>
+                    <div class="join-info-tip">
+                        <p>💡 輸入公開或私人房號皆可直接加入對決！</p>
+                    </div>
+                    <button onclick="joinGame()" class="lobby-btn btn-join">🚪 加入房間</button>
+                </div>
+            </div>
+            
+            <!-- 活躍房間列表容器 -->
+            <div style="max-width: 750px; margin: 0 auto 30px auto; background: #fff; padding: 24px; border-radius: 16px; border: 1.5px dashed #2196F3; background-color: rgba(33, 150, 243, 0.02); box-sizing: border-box;">
+                <h3 style="margin-top: 0; color: #2196F3; font-size: 1.25em; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; border-bottom: 1px solid rgba(33,150,243,0.1); padding-bottom: 10px; margin-bottom: 15px;">
+                    🚪 可加入的房間列表
+                </h3>
+                <div id="available-rooms-list">
+                    <!-- 預設顯示無活躍房間提示，後續會透過 socket 實時渲染卡片 -->
+                    <div class="room-list-empty">
+                        <div class="room-list-empty-icon">🚪</div>
+                        <div>目前沒有活躍的房間，快去建立一個吧！</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="closeMultiplayerLobby()" style="background-color: #f44336; font-size: 1.1em; padding: 12px 40px; border-radius: 10px; border: none; cursor: pointer; color: white; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.25); font-weight: bold; transition: all 0.2s;">返回大廳</button>
+        </div>
+
+        <!-- 1.6 排行榜 -->
+        <div id="leaderboard-section" style="display: none; text-align: center;">
+            <h2>🏆 遊戲排行榜</h2>
+            <div style="margin-bottom: 20px;">
+                <button id="btn-lb-total" onclick="fetchLeaderboard('total_score')" style="margin-right: 10px; background-color: #4CAF50;">總得分</button>
+                <button id="btn-lb-frenzy" onclick="fetchLeaderboard('frenzy_wins')" style="margin-right: 10px; background-color: #787c7e;">狂熱賽勝場</button>
+                <button id="btn-lb-battle" onclick="fetchLeaderboard('battle_wins')" style="background-color: #787c7e;">大亂鬥勝場</button>
+            </div>
+            <div id="leaderboard-list" style="display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 400px; margin: 0 auto 20px auto;">
+                <!-- 排行榜資料 -->
+            </div>
+            <button onclick="closeLeaderboard()" style="background-color: #f44336; font-size: 1.1em; padding: 10px 30px;">返回大廳</button>
+        </div>
+
+        <!-- 1.7 帳號資訊 -->
+        <div id="account-info-section" style="display: none; text-align: center;">
+            <h2>👤 帳號資訊</h2>
+            <div style="margin: 20px auto; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-width: 450px; text-align: left;">
+                <h3 style="margin-top: 0;">📊 個人數據</h3>
+                <p style="font-size: 1.2em;">總得分：<strong id="acc-total-score" style="color: #4CAF50;">0</strong> 分</p>
+                <p style="font-size: 1.2em;">狂熱賽勝場：<strong id="acc-frenzy-wins" style="color: #2196F3;">0</strong> 勝</p>
+                <p style="font-size: 1.2em;">大亂鬥勝場：<strong id="acc-battle-wins" style="color: #9c27b0;">0</strong> 勝</p>
+                
+                <hr style="margin: 15px 0;">
+                
+                <!-- 歷史戰績頁籤 -->
+                <div style="display: flex; margin-bottom: 15px; gap: 10px;">
+                    <button id="btn-hist-frenzy" onclick="switchHistoryTab('frenzy')" style="flex: 1; padding: 8px; background-color: #2196F3; font-size: 0.95em;">狂熱賽紀錄</button>
+                    <button id="btn-hist-battle" onclick="switchHistoryTab('battle')" style="flex: 1; padding: 8px; background-color: #787c7e; font-size: 0.95em;">大亂鬥紀錄</button>
+                </div>
+                
+                <div id="frenzy-history-container">
+                    <h3>📜 最近 10 場狂熱賽戰績</h3>
+                    <div id="acc-recent-games" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                        <!-- 戰績資料會透過 JS 載入 -->
+                    </div>
+                </div>
+                
+                <div id="battle-history-container" style="display: none;">
+                    <h3>⚔️ 最近 10 場大亂鬥戰績</h3>
+                    <div id="acc-recent-battle-games" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                        <!-- 戰績資料會透過 JS 載入 -->
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeAccountInfo()" style="background-color: #f44336; font-size: 1.1em; padding: 10px 30px;">返回大廳</button>
+        </div>
+
+        <!-- 1.8 多人連線準備大廳 -->
+        <div id="waiting-room-section" style="display: none; text-align: center;">
+            <h2>🏠 準備大廳 - 房間 <span id="display-room-id"></span></h2>
+            
+            <!-- 結算提示框 -->
+            <div id="frenzy-result-message" style="display: none; background: #fffbf0; border: 2px solid #FFD700; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 id="result-title" style="margin: 0 0 10px 0; color: #d32f2f;">⏱️ 時間到！遊戲結算</h3>
+                <p id="frenzy-winners-text" style="font-size: 1.2em; margin: 0; font-weight: bold;"></p>
+            </div>
+
+            <div style="margin: 20px auto; width: 60%; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                <h3>👑 玩家列表</h3>
+                <ul id="waiting-players-list" style="list-style-type: none; padding: 0; font-size: 1.2em;">
+                    <!-- 玩家名單會自動填入這裡 -->
+                </ul>
+            </div>
+
+            <div style="margin: 20px auto; width: 60%; background: #eef2f5; padding: 15px; border-radius: 8px;">
+                <h3>⚙️ 遊戲模式設定</h3>
+                <select id="game-mode-select" disabled style="padding: 10px; font-size: 1em; width: 80%;">
+                    <option value="frenzy" selected>限時狂熱賽 (預設)</option>
+                    <option value="battle">同題搶答大亂鬥 (Shared Grid Battle)</option>
+                    <option value="speedrun" disabled>同題競速搶分賽 (開發中)</option>
+                </select>
+                <p id="host-message" style="color: #666; margin-top: 10px;">等待房主選擇模式並開始遊戲...</p>
+                <button id="btn-start-game" onclick="startGame()" style="display: none; background-color: #FF9800; font-size: 1.2em; padding: 10px 30px; margin-top: 15px;">🚀 開始遊戲</button>
+            </div>
+        </div>
+
+        <!-- 2. 遊戲主畫面區（一開始先隱藏起來，加入房間後才顯示） -->
+        <div id="game-section" style="display: none;">
+            
+            <!-- 左邊：計分板與單人數據 -->
+            <div id="scoreboard-container">
+                <!-- 計時器 (狂熱模式專用) -->
+                <div id="timer-container" style="display: none; text-align: center; margin-bottom: 20px;">
+                    <h2 id="timer-title" style="margin: 0; color: #666;">剩餘時間</h2>
+                    <div id="frenzy-timer" style="font-size: 3em; font-weight: bold; color: #d32f2f;">03:00</div>
+                </div>
+
+                <!-- 多人模式：即時計分板 -->
+                <div id="scoreboard-area">
+                    <h3>👑 即時計分板</h3>
+                    <div id="score-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                        <!-- 這裡之後會用 JavaScript 動態產生 .score-row -->
+                    </div>
+                </div>
+                
+                <!-- 單人模式：總分統計 -->
+                <div id="single-player-stats" style="display: none;">
+                    <h3>🎮 單人模式</h3>
+                    <p style="font-size: 1.2em; margin-top: 20px;">歷史總分：<strong id="my-total-score" style="color: green; font-size: 1.5em;">0</strong> 分</p>
+                </div>
+            </div>
+
+            <!-- 右邊：Wordle 猜字區 -->
+            <div id="wordle-area">
+                <!-- 輪次/回合狀態列 -->
+                <div id="battle-round-indicator" style="display: none; font-size: 1.25em; font-weight: bold; color: #9c27b0; margin-bottom: 15px; text-align: center; background: #f3e5f5; padding: 10px; border-radius: 8px; border: 1.5px solid #e1bee7; box-shadow: 0 4px 10px rgba(156, 39, 176, 0.05);">
+                    ⚔️ 大亂鬥 - 第 <span id="battle-current-round" style="font-size: 1.2em; color: #7b1fa2;">1</span> / 3 回合
+                </div>
+                
+                <div id="wordle-grid-wrapper">
+                    <div id="wordle-grid">
+                        <!-- 這裡之後會用 JavaScript 動態畫出 5x6 的 Wordle 格子 -->
+                    </div>
+                </div>
+
+                <!-- [NEW] 個人草稿作答區 UI -->
+                <div id="private-draft-container" style="display: none; flex-direction: column; align-items: center; margin-top: 20px; padding: 15px; background: rgba(255, 215, 0, 0.05); border: 1.5px dashed #FFD700; border-radius: 12px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.03);">
+                    <p style="margin: 0 0 10px 0; font-size: 1em; color: #b8860b; font-weight: bold; display: flex; align-items: center; gap: 8px; justify-content: center;">
+                        📝 個人草稿作答區 (對手看不見)
+                        <span id="draft-remaining-badge" class="draft-badge badge-sufficient">已猜測 0 次</span>：
+                    </p>
+                    <div id="private-draft-row" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <div class="cell private-cell" id="draft-cell-0"></div>
+                        <div class="cell private-cell" id="draft-cell-1"></div>
+                        <div class="cell private-cell" id="draft-cell-2"></div>
+                        <div class="cell private-cell" id="draft-cell-3"></div>
+                        <div class="cell private-cell" id="draft-cell-4"></div>
+                    </div>
+                    <p id="private-draft-tip" style="margin: 0; font-size: 0.85em; color: #777;">打字並按下 <span style="background: #eee; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Enter</span> 鍵，搶先送出到上方共享大螢幕！</p>
+                </div>
+
+                <!-- [NEW] 互動式可拖曳與折疊虛擬鍵盤區 -->
+                <div id="virtual-keyboard" class="virtual-keyboard">
+                    <!-- 拖曳控制與折疊頂部面板 -->
+                    <div class="keyboard-header" id="keyboard-drag-handle">
+                        <div class="drag-handle-indicator">
+                            <span class="drag-icon">⠿</span>
+                            <span class="drag-text">拖曳移動鍵盤</span>
+                        </div>
+                        <button class="keyboard-collapse-btn" onclick="toggleKeyboardCollapse(event)" id="keyboard-toggle-btn">➖ 收起</button>
+                    </div>
+                    
+                    <div id="keyboard-keys-body" class="keyboard-keys-body">
+                        <div class="keyboard-row">
+                            <button class="key" data-key="q">Q</button>
+                            <button class="key" data-key="w">W</button>
+                            <button class="key" data-key="e">E</button>
+                            <button class="key" data-key="r">R</button>
+                            <button class="key" data-key="t">T</button>
+                            <button class="key" data-key="y">Y</button>
+                            <button class="key" data-key="u">U</button>
+                            <button class="key" data-key="i">I</button>
+                            <button class="key" data-key="o">O</button>
+                            <button class="key" data-key="p">P</button>
+                        </div>
+                        <div class="keyboard-row">
+                            <div class="key-spacer"></div>
+                            <button class="key" data-key="a">A</button>
+                            <button class="key" data-key="s">S</button>
+                            <button class="key" data-key="d">D</button>
+                            <button class="key" data-key="f">F</button>
+                            <button class="key" data-key="g">G</button>
+                            <button class="key" data-key="h">H</button>
+                            <button class="key" data-key="j">J</button>
+                            <button class="key" data-key="k">K</button>
+                            <button class="key" data-key="l">L</button>
+                            <div class="key-spacer"></div>
+                        </div>
+                        <div class="keyboard-row">
+                            <button class="key wide-key" data-key="enter">ENTER</button>
+                            <button class="key" data-key="z">Z</button>
+                            <button class="key" data-key="x">X</button>
+                            <button class="key" data-key="c">C</button>
+                            <button class="key" data-key="v">V</button>
+                            <button class="key" data-key="b">B</button>
+                            <button class="key" data-key="n">N</button>
+                            <button class="key" data-key="m">M</button>
+                            <button class="key wide-key" data-key="backspace">⌫</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 移除了原本的 input-area，改為監聽實體鍵盤 -->
+                <!-- 顯示系統提示訊息的地方 -->
+                <p id="message-box"></p>
+
+                <!-- 大亂鬥猜測紀錄/誰猜的軌跡 -->
+                <div id="battle-guess-log" style="display: none; margin-top: 15px; text-align: left; padding: 10px 15px; background: #fafafa; border: 1.5px solid #eaeaea; border-radius: 8px; max-height: 120px; overflow-y: auto; font-size: 0.9em; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+                    <strong style="color: #666; font-size: 0.95em;">📋 猜測紀錄與出處：</strong>
+                    <div id="battle-guess-log-list" style="margin-top: 5px; color: #555; line-height: 1.5;"></div>
+                </div>
+
+                <!-- 管理員 Will 專屬特權卡片 -->
+                <div id="admin-cheat-card" style="display: none; margin-top: 20px; padding: 12px 18px; background: rgba(255, 215, 0, 0.08); border: 1.5px dashed #FFD700; border-radius: 12px; font-weight: bold; color: #b8860b; text-align: center; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.05);">
+                    🔑 <span style="font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; color: #b8860b;">Admin Mode</span>: 當前目標單字是 <span id="admin-target-display" style="color: #d32f2f; font-size: 1.25em; text-decoration: underline; letter-spacing: 2px;">-----</span>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- 載入 SocketIO 的對講機接收器，讓網頁可以跟後端通訊 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <!-- 預留給等一下要裝的 JavaScript 肌肉 -->
+    <script src="/static/game.js"></script>
+</body>
+</html>

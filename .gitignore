@@ -1,0 +1,17 @@
+# Python 虛擬環境
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# 本地端隱私設定（包含密鑰）
+.env
+
+# 資料庫與實體暫存
+instance/
+wordle.db
+default.db
+
+# VS Code 設定
+.vscode/
