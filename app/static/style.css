@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+
 /* --- 1. 整體網頁與大廳設計 --- */
 body {
     font-family: "微軟正黑體", "Microsoft JhengHei", sans-serif;
@@ -1105,5 +1107,362 @@ button:hover {
     
     .keyboard-row {
         gap: 4px !important;
+    }
+}
+
+/* --- 12. 登入頁面 Wordle PvP 現代電競風 Logo 設計 --- */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Outfit:wght@400;700;900&family=Inter:wght@400;700;900&display=swap');
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 30px 0 45px 0;
+    padding: 15px;
+    perspective: 1200px;
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.logo-main-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+/* --- WORDLE 經典拼圖風格 (極簡扁平現代化) --- */
+.logo-wordle {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.logo-tile {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    border-radius: 12px;
+    position: relative;
+    user-select: none;
+    background: #787c7e;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                box-shadow 0.3s ease, 
+                background-color 0.3s ease;
+}
+
+/* 光澤微光疊加 */
+.logo-tile::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 50%);
+    pointer-events: none;
+}
+
+/* Wordle 經典配色 (使用現代扁平高質感色調) */
+.logo-tile.tile-green {
+    background: #6aaa64;
+    border-color: rgba(106, 170, 100, 0.2);
+    box-shadow: 0 4px 10px rgba(106, 170, 100, 0.25), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.logo-tile.tile-yellow {
+    background: #c9b458;
+    border-color: rgba(201, 180, 88, 0.2);
+    box-shadow: 0 4px 10px rgba(201, 180, 88, 0.25), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.logo-tile.tile-gray {
+    background: #787c7e;
+    border-color: rgba(120, 124, 126, 0.2);
+    box-shadow: 0 4px 10px rgba(120, 124, 126, 0.25), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* --- PVP 競技狂熱風 (高對比霓虹電競徽章) --- */
+.logo-pvp-combat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 斜切 VS 戰鬥阻隔 */
+.logo-vs-slash {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    font-style: italic;
+    color: #ffeb3b;
+    background: #1a1a1a;
+    padding: 4px 10px;
+    border-radius: 4px;
+    transform: skewX(-15deg);
+    border-left: 3px solid #ffeb3b;
+    border-right: 3px solid #ff416c;
+    box-shadow: 0 0 10px rgba(255, 235, 59, 0.4);
+    text-shadow: 0 0 4px rgba(255, 235, 59, 0.6);
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+/* 霓虹 PvP 玻璃膠囊徽章 */
+.logo-pvp-neon-badge {
+    background: rgba(26, 26, 26, 0.95);
+    border-radius: 30px;
+    padding: 6px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ff416c;
+    box-shadow: 0 0 15px rgba(255, 65, 108, 0.4),
+                inset 0 0 8px rgba(255, 65, 108, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.logo-pvp-neon-badge::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: 0.5s;
+}
+
+.logo-pvp-neon-badge:hover::before {
+    left: 100%;
+}
+
+.pvp-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #ff416c, #8e2de2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 5px rgba(255, 65, 108, 0.5));
+    user-select: none;
+    animation: pvpTextGlow 2s infinite alternate;
+}
+
+@keyframes pvpTextGlow {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(255, 65, 108, 0.4));
+    }
+    100% {
+        filter: drop-shadow(0 0 8px rgba(255, 65, 108, 0.8)) drop-shadow(0 0 12px rgba(142, 45, 226, 0.6));
+    }
+}
+
+/* 副標題 */
+.logo-subtitle {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: #4a5568;
+    margin: 20px 0 0 0;
+    letter-spacing: 6px;
+    text-indent: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeInSubtitle 0.8s ease-out 0.6s forwards;
+}
+
+@keyframes fadeInSubtitle {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.logo-subtitle::before,
+.logo-subtitle::after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #a0aec0, transparent);
+}
+
+/* --- 動畫系統 --- */
+
+/* 3D 翻轉登場動畫 (修正 hover 隱藏 Bug，不再在 hover 時替換 animation) */
+.logo-tile {
+    opacity: 1;
+}
+
+.animate-flip {
+    animation: tileFlipIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+}
+
+.animate-flip:nth-child(1) { animation-delay: 0.05s; }
+.animate-flip:nth-child(2) { animation-delay: 0.12s; }
+.animate-flip:nth-child(3) { animation-delay: 0.19s; }
+.animate-flip:nth-child(4) { animation-delay: 0.26s; }
+.animate-flip:nth-child(5) { animation-delay: 0.33s; }
+.animate-flip:nth-child(6) { animation-delay: 0.40s; }
+
+@keyframes tileFlipIn {
+    0% {
+        opacity: 0;
+        transform: rotateX(-95deg) translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: rotateX(0deg) translateY(0);
+    }
+}
+
+/* PvP 徽章登場動畫 */
+.animate-pop-in-badge {
+    animation: badgePopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+    animation-delay: 0.48s;
+}
+
+@keyframes badgePopIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.6) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+/* --- 互動 Hover 特效 (純 transition，無 animation 覆蓋隱藏問題) --- */
+.logo-tile:hover {
+    transform: translateY(-6px) scale(1.08) rotate(3deg);
+    z-index: 5;
+}
+
+.logo-tile.tile-green:hover {
+    background-color: #76ba6f;
+    box-shadow: 0 8px 20px rgba(106, 170, 100, 0.45), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.logo-tile.tile-yellow:hover {
+    background-color: #d4be5f;
+    box-shadow: 0 8px 20px rgba(201, 180, 88, 0.45), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.logo-tile.tile-gray:hover {
+    background-color: #878c8f;
+    box-shadow: 0 8px 20px rgba(120, 124, 126, 0.45), 
+                inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* PvP 徽章 Hover 特效 */
+.logo-pvp-neon-badge:hover {
+    transform: scale(1.06) rotate(-2deg);
+    border-color: #00c6ff;
+    box-shadow: 0 0 25px rgba(0, 198, 255, 0.6),
+                inset 0 0 12px rgba(0, 198, 255, 0.3);
+}
+
+.logo-pvp-neon-badge:hover .pvp-text {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 8px rgba(0, 198, 255, 0.8));
+}
+
+.logo-vs-slash:hover {
+    transform: skewX(-15deg) scale(1.1);
+    color: #ff416c;
+    border-left-color: #ff416c;
+    border-right-color: #ffeb3b;
+    box-shadow: 0 0 15px rgba(255, 65, 108, 0.5);
+}
+
+/* --- 13. 響應式 Wordle PvP Logo 設計 --- */
+@media screen and (max-width: 768px) {
+    .logo-container {
+        margin: 20px 0 30px 0;
+        padding: 10px;
+    }
+    .logo-main-wrapper {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .logo-tile {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        border-radius: 10px;
+    }
+    .logo-tile::after {
+        border-radius: 10px;
+    }
+    .logo-vs-slash {
+        font-size: 15px;
+        padding: 3px 8px;
+    }
+    .logo-pvp-neon-badge {
+        padding: 5px 16px;
+    }
+    .pvp-text {
+        font-size: 20px;
+    }
+    .logo-subtitle {
+        font-size: 1.05em;
+        letter-spacing: 3px;
+        margin-top: 15px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .logo-tile {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        border-radius: 8px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08), 
+                    inset 0 -2px 0 rgba(0, 0, 0, 0.15);
+    }
+    .logo-tile::after {
+        border-radius: 8px;
+    }
+    .logo-vs-slash {
+        font-size: 13px;
+        padding: 2px 6px;
+    }
+    .logo-pvp-neon-badge {
+        padding: 4px 12px;
+    }
+    .pvp-text {
+        font-size: 18px;
+    }
+    .logo-subtitle {
+        font-size: 0.9em;
+        letter-spacing: 2px;
     }
 }

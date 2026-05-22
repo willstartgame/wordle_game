@@ -18,9 +18,25 @@
 
     <div id="app-container">
         <!-- LOGO 區塊 -->
-        <div id="logo-section" style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 3em; margin: 0; color: #333;">🎮 WORDLE</h1>
-            <h2 style="font-size: 1.5em; margin: 0; color: #666;">多人連線搶分戰</h2>
+        <div id="logo-section" class="logo-container">
+            <div class="logo-main-wrapper">
+                <!-- WORDLE Part -->
+                <div class="logo-wordle">
+                    <span class="logo-tile tile-green animate-flip" style="--delay: 1;">W</span>
+                    <span class="logo-tile tile-yellow animate-flip" style="--delay: 2;">O</span>
+                    <span class="logo-tile tile-gray animate-flip" style="--delay: 3;">R</span>
+                    <span class="logo-tile tile-green animate-flip" style="--delay: 4;">D</span>
+                    <span class="logo-tile tile-yellow animate-flip" style="--delay: 5;">L</span>
+                    <span class="logo-tile tile-green animate-flip" style="--delay: 6;">E</span>
+                </div>
+                <!-- PVP Badge -->
+                <div class="logo-pvp-combat animate-pop-in-badge">
+                    <div class="logo-pvp-neon-badge">
+                        <span class="pvp-text">PVP</span>
+                    </div>
+                </div>
+            </div>
+            <h2 class="logo-subtitle">多人連線線上對決搶分戰</h2>
         </div>
 
         <!-- 1. 登入與註冊區（Auth Section） -->
