@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wordle 多人連線搶分戰 - 期末報告簡報</title>
+  <!-- 引入 Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       1. 全域樣式與變數設定
+       ========================================================================== */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+
+      /* 核心顏色系統 */
+      --primary: #8b5cf6;
+      /* 紫色 (大亂鬥) */
+      --primary-glow: rgba(139, 92, 246, 0.3);
+      --frenzy: #3b82f6;
+      /* 藍色 (狂熱賽) */
+      --frenzy-glow: rgba(59, 130, 246, 0.3);
+      --classic: #10b981;
+      /* 綠色 (單人/經典) */
+      --classic-glow: rgba(16, 185, 129, 0.3);
+
+      --card-bg: rgba(22, 30, 49, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --glass-bg: rgba(17, 24, 39, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', 'Noto Sans TC', 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* ==========================================================================
+       2. 簡報容器與投影片排版
+       ========================================================================== */
+    .presentation-container {
+      flex-grow: 1;
+      position: relative;
+      width: 100%;
+      height: 90vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .slide {
+      position: absolute;
+      width: 90%;
+      max-width: 1200px;
+      height: 80%;
+      max-height: 700px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 40px 60px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+      pointer-events: none;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* 漸層邊條裝飾 */
+    .slide::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 100px;
+      right: 100px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--classic) 0%, var(--frenzy) 50%, var(--primary) 100%);
+      border-radius: 0 0 4px 4px;
+      opacity: 0.8;
+    }
+
+    /* 投影片頭部 */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffffff, #d1d5db);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .slide-badge {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--primary);
+      border-radius: 30px;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+    }
+
+    /* 投影片主體 */
+    .slide-body {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    /* 投影片底部資訊 */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .author-info {
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       3. 各張投影片專用排版
+       ========================================================================== */
+
+    /* --- Slide 1: 封面設計 --- */
+    .slide-cover {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cover-title {
+      font-size: 3.8rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 30%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1.5px;
+      filter: drop-shadow(0 0 30px rgba(139, 92, 246, 0.25));
+    }
+
+    .cover-subtitle {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      font-weight: 400;
+      letter-spacing: 2px;
+    }
+
+    .cover-tech-stack {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tech-tag {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 8px 18px;
+      border-radius: 12px;
+      color: #e5e7eb;
+      transition: all 0.3s ease;
+    }
+
+    .tech-tag:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.4);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+    }
+
+    /* --- Slide 2: 模式規則 --- */
+    .grid-modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+    }
+
+    .mode-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-6px);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .mode-card.classic-card:hover {
+      border-color: var(--classic);
+      box-shadow: 0 10px 30px var(--classic-glow);
+    }
+
+    .mode-card.frenzy-card:hover {
+      border-color: var(--frenzy);
+      box-shadow: 0 10px 30px var(--frenzy-glow);
+    }
+
+    .mode-card.battle-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 10px 30px var(--primary-glow);
+    }
+
+    .mode-icon {
+      font-size: 2.2rem;
+      margin-bottom: 16px;
+    }
+
+    .mode-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .classic-card .mode-name {
+      color: var(--classic);
+    }
+
+    .frenzy-card .mode-name {
+      color: var(--frenzy);
+    }
+
+    .battle-card .mode-name {
+      color: var(--primary);
+    }
+
+    .mode-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .mode-rule-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* --- Slide 3: 資料庫與安全 --- */
+    .db-section-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .db-card,
+    .sec-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .card-title-sm {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f3f4f6;
+    }
+
+    /* 資料庫綱要模擬器 */
+    .schema-box {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      background: rgba(10, 15, 26, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 16px;
+      color: #93c5fd;
+    }
+
+    .schema-table {
+      margin-bottom: 12px;
+    }
+
+    .schema-table:last-child {
+      margin-bottom: 0;
+    }
+
+    .table-name {
+      color: #c084fc;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .schema-field {
+      padding-left: 16px;
+      color: #93c5fd;
+      opacity: 0.9;
+    }
+
+    .field-type {
+      color: #64748b;
+    }
+
+    /* 安全防禦項目 */
+    .sec-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sec-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .sec-num {
+      background: var(--frenzy);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .sec-item-content h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .sec-item-content p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* --- Slide 4: 大亂鬥公平性 --- */
+    .fairness-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      width: 100%;
+    }
+
+    .fair-box {
+      border-radius: 20px;
+      padding: 24px;
+      height: 100%;
+    }
+
+    .fair-box.bad {
+      background: rgba(239, 68, 68, 0.03);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+    }
+
+    .fair-box.good {
+      background: rgba(139, 92, 246, 0.04);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.05);
+    }
+
+    .fair-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bad .fair-title {
+      color: #ef4444;
+    }
+
+    .good .fair-title {
+      color: #a78bfa;
+    }
+
+    .fair-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .fair-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .bad .fair-icon {
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .good .fair-icon {
+      color: #a78bfa;
+      font-weight: bold;
+    }
+
+    .fair-text-title {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 2px;
+      color: var(--text-main);
+    }
+
+    .fair-text-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* ==========================================================================
+       4. 底端控制工具列與指示器
+       ========================================================================== */
+    .controls-bar {
+      height: 10vh;
+      background: var(--glass-bg);
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .nav-btn:active {
+      transform: translateY(1px);
+    }
+
+    .nav-btn.primary-btn {
+      background: var(--primary);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+
+    .nav-btn.primary-btn:hover {
+      background: #7c3aed;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+    }
+
+    /* 指示器圓點 */
+    .indicators {
+      display: flex;
+      gap: 10px;
+    }
+
+    .indicator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .indicator-dot.active {
+      background: var(--primary);
+      width: 28px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* 快捷說明提示 */
+    .hotkey-tip {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 簡報展示區 -->
+  <div class="presentation-container">
+
+    <!-- Slide 1: 封面與概括 -->
+    <div class="slide slide-cover active" id="slide-1">
+      <div class="slide-header" style="width: 100%; justify-content: flex-end;">
+        <span class="slide-badge">01 / 04</span>
+      </div>
+
+      <div class="slide-body" style="flex-direction: column;">
+        <h1 class="cover-title">Wordle 多人連線搶分戰</h1>
+        <p class="cover-subtitle">期末專題報告 — 核心模式與架構</p>
+
+        <div class="cover-tech-stack">
+          <span class="tech-tag">Python Flask</span>
+          <span class="tech-tag">Socket.IO</span>
+          <span class="tech-tag">SQLite</span>
+          <span class="tech-tag">SQLAlchemy</span>
+          <span class="tech-tag">HTML5 / Vanilla CSS</span>
+        </div>
+      </div>
+
+      <div class="slide-footer" style="width: 100%;">
+        <span class="author-info">報告人：劉晉維</span>
+        <span>Wordle Multiplayer Battle Project</span>
+      </div>
+    </div>
+
+    <!-- Slide 2: 三大模式規則 -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <h2 class="slide-title">🎮 三大遊戲模式規則解析</h2>
+        <span class="slide-badge">02 / 04</span>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-modes">
+
+          <!-- 單人自主 -->
+          <div class="mode-card classic-card">
+            <div>
+              <div class="mode-icon">🎮</div>
+              <h3 class="mode-name">單人自主練習</h3>
+              <p class="mode-desc">建立專屬單人包廂，進行經典 Wordle 特訓。每題有 6 次猜字機會，答對即可得分，答錯或答對後系統自動發送去重後的新單字。</p>
+            </div>
+            <span class="mode-rule-badge" style="color: var(--classic);">個人特訓・去重換題</span>
+          </div>
+
+          <!-- 多人限時狂熱 -->
+          <div class="mode-card frenzy-card">
+            <div>
+              <div class="mode-icon">⚡</div>
+              <h3 class="mode-name">多人限時狂熱賽</h3>
+              <p class="mode-desc">最多 10 人在線競速，限時 3 分鐘。玩家各自擁有獨立謎題，每答對一題即得一分並更新新題目，遇到難題可點擊 Skip 放棄。時間結束後結算贏家。</p>
+            </div>
+            <span class="mode-rule-badge" style="color: var(--frenzy);">限時 3 分鐘・個人獨立題庫</span>
+          </div>
+
+          <!-- 同題大亂鬥 -->
+          <div class="mode-card battle-card">
+            <div>
+              <div class="mode-icon">⚔️</div>
+              <h3 class="mode-name">同題搶答大亂鬥</h3>
+              <p class="mode-desc">共進行 3 回合，限時 5 分鐘。全場玩家面對同一道謎題並共享作答網格，每次有效猜測即時同步，首位猜中綠色正確單字者奪得該回合分數。</p>
+            </div>
+            <span class="mode-rule-badge" style="color: var(--primary);">共 3 回合・共享網格競速</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>專題概括與模式規則</span>
+        <span>Page 2</span>
+      </div>
+    </div>
+
+    <!-- Slide 3: 資料庫與帳號安全 -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <h2 class="slide-title">🔒 帳號安全與資料庫管理</h2>
+        <span class="slide-badge">03 / 04</span>
+      </div>
+
+      <div class="slide-body">
+        <div class="db-section-grid">
+
+          <!-- 左欄：SQLite schema -->
+          <div class="db-card">
+            <h3 class="card-title-sm">📁 SQLite 資料庫模型設計</h3>
+            <div class="schema-box">
+              <div class="schema-table">
+                <div class="table-name">class Player(db.Model)</div>
+                <div class="schema-field">id <span class="field-type">[Integer, PK]</span></div>
+                <div class="schema-field">username <span class="field-type">[String(50), Unique]</span></div>
+                <div class="schema-field">password_hash <span class="field-type">[String(255)]</span></div>
+                <div class="schema-field">total_score <span class="field-type">[Integer]</span></div>
+                <div class="schema-field">frenzy_wins / battle_wins <span class="field-type">[Integer]</span></div>
+              </div>
+
+              <div class="schema-table" style="margin-top: 16px;">
+                <div class="table-name">class GameRecord(db.Model)</div>
+                <div class="schema-field">id <span class="field-type">[Integer, PK]</span></div>
+                <div class="schema-field">player_id <span class="field-type">[Integer, ForeignKey]</span></div>
+                <div class="schema-field">score / wrong_count <span class="field-type">[Integer]</span></div>
+                <div class="schema-field">mode <span class="field-type">[String(20)]</span></div>
+                <div class="schema-field">is_win <span class="field-type">[Boolean]</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右欄：安全機制 -->
+          <div class="sec-card">
+            <h3 class="card-title-sm">🛡️ 後端三層安全防護</h3>
+            <ul class="sec-list">
+              <li class="sec-item">
+                <div class="sec-num">1</div>
+                <div class="sec-item-content">
+                  <h4>密碼單向雜湊加密</h4>
+                  <p>採用 pbkdf2:sha256 演算法對玩家註冊密碼進行加密存儲，保障資料庫底層密碼不外洩。</p>
+                </div>
+              </li>
+              <li class="sec-item">
+                <div class="sec-num">2</div>
+                <div class="sec-item-content">
+                  <h4>後端 Session 安全身分驗證</h4>
+                  <p>所有 Socket.IO 事件強制從後端安全 Session 中讀取 username，杜絕惡意修改前端變數進行他人假冒或干擾。</p>
+                </div>
+              </li>
+              <li class="sec-item">
+                <div class="sec-num">3</div>
+                <div class="sec-item-content">
+                  <h4>多帳號登入 Socket 重連</h4>
+                  <p>登入成功時強制重置並重連 Socket 握手，解決同瀏覽器多開測試時的 Cookie Session 覆蓋衝突。</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>SQLite + SQLAlchemy + Flask Session 架構</span>
+        <span>Page 3</span>
+      </div>
+    </div>
+
+    <!-- Slide 4: 大亂鬥公平性決策 -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <h2 class="slide-title">⚔️ 同題搶答大亂鬥的公平性設計</h2>
+        <span class="slide-badge">04 / 04</span>
+      </div>
+
+      <div class="slide-body">
+        <div class="fairness-grid">
+
+          <!-- 左側：原始規劃 -->
+          <div class="fair-box bad">
+            <h3 class="fair-title">❌ 原始規劃 (次數制 / 輪流制)</h3>
+            <ul class="fair-list">
+              <li class="fair-item">
+                <span class="fair-icon">✦</span>
+                <div>
+                  <span class="fair-text-title">嚴重的搭便車效應 (Free-rider)</span>
+                  <span class="fair-text-desc">先猜的玩家嘗試排除錯誤字母並找出綠黃字，卻給後方玩家提供了無痛撿尾刀的關鍵線索。</span>
+                </div>
+              </li>
+              <li class="fair-item">
+                <span class="fair-icon">✦</span>
+                <div>
+                  <span class="fair-text-title">順位決定勝負</span>
+                  <span class="fair-text-desc">隨機的輪流順序決定了作答權利，當情報充足時輪到的玩家天然勝出，缺乏公正性。</span>
+                </div>
+              </li>
+              <li class="fair-item">
+                <span class="fair-icon">✦</span>
+                <div>
+                  <span class="fair-text-title">惡意洗板與破壞</span>
+                  <span class="fair-text-desc">若採全場共用猜測上限，單一玩家隨意亂填即可直接耗光全場猜測次數，毀掉整場遊戲。</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- 右側：最終方案 -->
+          <div class="fair-box good">
+            <h3 class="fair-title">✨ 最終公平方案 (草稿隔離+獨立限次)</h3>
+            <ul class="fair-list">
+              <li class="fair-item">
+                <span class="fair-icon">✔</span>
+                <div>
+                  <span class="fair-text-title">個人草稿作答區 + 輸入隔離</span>
+                  <span class="fair-text-desc">黃色虛線框作答區供每人打字，送出才登上大網格。避免多人在同一行拼字鍵盤衝突。</span>
+                </div>
+              </li>
+              <li class="fair-item">
+                <span class="fair-icon">✔</span>
+                <div>
+                  <span class="fair-text-title">每人每回合獨立限制 6 次</span>
+                  <span class="fair-text-desc">每位玩家僅限送出 6 次有效單字。大網格無行數限制，行數超過 6 行會自動滾動展示最新戰況。</span>
+                </div>
+              </li>
+              <li class="fair-item">
+                <span class="fair-icon">✔</span>
+                <div>
+                  <span class="fair-text-title">極致的即時競速博弈 (Game Theory)</span>
+                  <span class="fair-text-desc">不猜就拿不到線索；但搶先猜測會將線索奉獻給對手。玩家必須在出字時機、詞彙庫與打字速度中做出抉擇！</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>賽局理論與使用者體驗設計</span>
+        <span>Page 4</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 控制工具列 -->
+  <div class="controls-bar">
+    <div class="hotkey-tip">⌨️ 按左右方向鍵 [←] [→] 或空白鍵 [Space] 可切換投影片</div>
+
+    <div class="indicators" id="indicators-container">
+      <div class="indicator-dot active" onclick="goToSlide(1)"></div>
+      <div class="indicator-dot" onclick="goToSlide(2)"></div>
+      <div class="indicator-dot" onclick="goToSlide(3)"></div>
+      <div class="indicator-dot" onclick="goToSlide(4)"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="prevSlide()">上一步 (←)</button>
+      <button class="nav-btn primary-btn" onclick="nextSlide()">下一步 (→ / Space)</button>
+    </div>
+  </div>
+
+  <!-- 簡報邏輯 JavaScript -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 4;
+
+    function updateSlideVisibility() {
+      // 隱藏所有投影片並移除 active
+      for (let i = 1; i <= totalSlides; i++) {
+        document.getElementById(`slide-${i}`).classList.remove('active');
+      }
+
+      // 顯示當前投影片
+      document.getElementById(`slide-${currentSlide}`).classList.add('active');
+
+      // 更新圓點指示器
+      const dots = document.querySelectorAll('.indicator-dot');
+      dots.forEach((dot, index) => {
+        if (index === currentSlide - 1) {
+          dot.classList.add('active');
+        } else {
+          dot.classList.remove('active');
+        }
+      });
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+      } else {
+        currentSlide = 1; // 循環播放
+      }
+      updateSlideVisibility();
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+      } else {
+        currentSlide = totalSlides;
+      }
+      updateSlideVisibility();
+    }
+
+    function goToSlide(slideNum) {
+      currentSlide = slideNum;
+      updateSlideVisibility();
+    }
+
+    // 鍵盤監聽事件
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowRight' || event.key === ' ') {
+        event.preventDefault(); // 防止空白鍵滾動網頁
+        nextSlide();
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        prevSlide();
+      }
+    });
+  </script>
+</body>
+
+</html>
